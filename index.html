@@ -387,3 +387,41 @@ showPage('home');
 
 </body>
 </html>
+function selectPlan(planValue){
+  if(!currentUser){
+    alert('Veuillez vous connecter pour investir.');
+    showPage('login');
+    return;
+  }
+  const plan = plansData[planValue];
+  if(currentUser.balance < planValue){
+    alert('Votre solde est insuffisant pour investir dans ce plan. Veuillez faire un dépôt.');
+    return;
+  }
+  
+  // Débiter le solde et ajouter l’investissement
+  currentUser.balance -= planValue;
+  const gainTotal = plan.daily * plan.days;
+  const netWithdraw = gainTotal > 1000 ? Math.round(gainTotal*0.95) : 0;
+
+  currentUser.investments.push({
+    date: new Date().toLocaleString(),
+    planValue: planValue,
+    term: plan.term,
+    days: plan.days,
+    daily: plan.daily,
+    total: gainTotal,
+    net: netWithdraw
+  });
+
+  currentUser.history.push({
+    date: new Date().toLocaleString(),
+    action: 'Investissement',
+    amount: planValue,
+    plan: plan.term
+  });
+
+  updateUserData();
+  alert(`Investissement réussi ! Votre solde restant : ${currentUser.balance.toLocaleString()} FCFA`);
+  renderDashboard();
+}
