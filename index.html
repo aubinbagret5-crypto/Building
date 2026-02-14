@@ -2,9 +2,8 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Manager Invest - Semi-réel</title>
+<title>Manager Invest - Plateforme semi-réelle</title>
 <style>
-/* --- Styles globaux --- */
 body { font-family: Arial, sans-serif; margin:0; background:#f5f5f5; }
 header { background:#4CAF50; color:white; padding:15px; text-align:center; }
 nav { background:#333; overflow:hidden; }
@@ -26,32 +25,44 @@ th { background:#eee; }
 
 <header>
   <h1>Manager Invest</h1>
-  <p>Investissez et suivez vos gains</p>
+  <p>Investissez et suivez vos gains facilement !</p>
 </header>
 
 <nav>
   <a href="#home" onclick="showPage('home')">Accueil</a>
   <a href="#plans" onclick="showPage('plans')">Plans</a>
-  <a href="#signup" onclick="showPage('signup')">Investir</a>
+  <a href="#deposit" onclick="showPage('deposit')">Dépôt</a>
+  <a href="#withdraw" onclick="showPage('withdraw')">Retrait</a>
+  <a href="#history" onclick="showPage('history')">Historique</a>
   <a href="#dashboard" onclick="showPage('dashboard')">Tableau de bord</a>
+  <a href="#" id="logoutBtn" onclick="logout()">Se déconnecter</a>
 </nav>
 
-<!-- --- Page Accueil --- -->
+<!-- Accueil -->
 <section id="home">
   <h2>Bienvenue sur Manager Invest</h2>
-  <p>Découvrez nos plans et commencez à gagner dès maintenant !</p>
-  <button onclick="showPage('plans')">Voir les plans</button>
+  <p>Manager Invest vous permet de faire croître vos économies grâce à nos plans d’investissement adaptés à tous les budgets. Choisissez un plan, investissez et suivez vos gains en toute simplicité.</p>
+  <p>Pour commencer, <strong>inscrivez-vous ou connectez-vous</strong> pour accéder à tous les plans et fonctionnalités.</p>
+  <button onclick="showPage('signup')">Créer un compte</button>
+  <button onclick="showPage('login')">Se connecter</button>
 </section>
 
-<!-- --- Page Plans --- -->
-<section id="plans" style="display:none;">
-  <h2>Nos Plans d’Investissement</h2>
-  <div id="plansContainer"></div>
+<!-- Connexion -->
+<section id="login" style="display:none;">
+  <h2>Connexion</h2>
+  <p>Entrez votre email et mot de passe pour accéder à votre compte.</p>
+  <form id="loginForm">
+    <label>Email*</label><input type="email" id="loginEmail" required>
+    <label>Mot de passe*</label><input type="password" id="loginPassword" required>
+    <button type="submit">Se connecter</button>
+  </form>
+  <p>Pas encore inscrit ? <a href="#" onclick="showPage('signup')">Créer un compte</a></p>
 </section>
 
-<!-- --- Formulaire Inscription / Investissement --- -->
+<!-- Inscription -->
 <section id="signup" style="display:none;">
-  <h2>Inscription et Investissement</h2>
+  <h2>Créer un compte et investir</h2>
+  <p>Remplissez vos informations et choisissez un plan pour commencer votre investissement.</p>
   <form id="investmentForm">
     <label>Prénom*</label><input type="text" id="firstName" required>
     <label>Nom*</label><input type="text" id="lastName" required>
@@ -71,9 +82,60 @@ th { background:#eee; }
   </form>
 </section>
 
-<!-- --- Tableau de bord --- -->
+<!-- Plans -->
+<section id="plans" style="display:none;">
+  <h2>Nos Plans d’Investissement</h2>
+  <p>Choisissez le plan qui correspond à votre budget et à votre objectif. Cliquez sur "Investir" pour ajouter le plan à votre compte après connexion.</p>
+  <div id="plansContainer"></div>
+</section>
+
+<!-- Dépôt -->
+<section id="deposit" style="display:none;">
+  <h2>Dépôt / Recharge</h2>
+  <p>Vous pouvez recharger votre compte à tout moment. Entrez le montant que vous souhaitez déposer et cliquez sur "Recharger".</p>
+  <form id="depositForm">
+    <label>Montant à déposer</label>
+    <input type="number" id="depositAmount" min="100" required>
+    <button type="submit">Recharger</button>
+  </form>
+  <p>Solde actuel : <span id="currentBalance">0</span> FCFA</p>
+</section>
+
+<!-- Retrait -->
+<section id="withdraw" style="display:none;">
+  <h2>Retrait</h2>
+  <p>Pour retirer vos gains, entrez le montant que vous souhaitez retirer. L’impôt de 5% sera appliqué automatiquement sur le montant retiré.</p>
+  <form id="withdrawForm">
+    <label>Montant à retirer</label>
+    <input type="number" id="withdrawAmount" min="1000" required>
+    <button type="submit">Retirer</button>
+  </form>
+  <p>Solde actuel : <span id="withdrawBalance">0</span> FCFA</p>
+</section>
+
+<!-- Historique -->
+<section id="history" style="display:none;">
+  <h2>Historique des opérations</h2>
+  <p>Suivez toutes vos actions : dépôts, retraits et investissements.</p>
+  <table>
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Action</th>
+        <th>Montant</th>
+        <th>Plan / Type</th>
+      </tr>
+    </thead>
+    <tbody id="historyTable">
+      <tr><td colspan="4">Aucun historique pour l'instant.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- Tableau de bord -->
 <section id="dashboard" style="display:none;">
   <h2>Tableau de bord</h2>
+  <p>Visualisez vos investissements et suivez vos gains.</p>
   <table>
     <thead>
       <tr>
@@ -93,16 +155,9 @@ th { background:#eee; }
 </section>
 
 <script>
-// --- Gestion des pages ---
-const pages = ['home','plans','signup','dashboard'];
-function showPage(page){
-  pages.forEach(p=>document.getElementById(p).style.display='none');
-  document.getElementById(page).style.display='block';
-  if(page==='dashboard') renderDashboard();
-}
-
-// --- Données des plans ---
-const plansData = {
+// ======= Variables de base =======
+const pages = ['home','plans','signup','login','dashboard','deposit','withdraw','history'];
+let plansData = {
   2500: {term:'Long', days:60, daily:699},
   5000: {term:'Long', days:60, daily:1398},
   10000: {term:'Long', days:60, daily:2796},
@@ -114,8 +169,24 @@ const plansData = {
   750000: {term:'Court', days:15, daily:209700},
   1000000: {term:'Court', days:15, daily:279600}
 };
+let users = JSON.parse(localStorage.getItem('users') || '[]');
+let currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
 
-// --- Génération des plans sur la page Plans et formulaire ---
+// ======= Navigation =======
+function showPage(page){
+  pages.forEach(p=>document.getElementById(p).style.display='none');
+  document.getElementById(page).style.display='block';
+  if(page==='dashboard') renderDashboard();
+  if(page==='history') renderHistory();
+  updateMenu();
+}
+
+// ======= Menu =======
+function updateMenu(){
+  document.getElementById('logoutBtn').style.display = currentUser ? 'inline-block' : 'none';
+}
+
+// ======= Plans =======
 const plansContainer = document.getElementById('plansContainer');
 const planSelectForm = document.getElementById('investmentPlanForm');
 for(let key in plansData){
@@ -129,15 +200,11 @@ for(let key in plansData){
   </div>`;
   planSelectForm.innerHTML += `<option value="${key}">${Number(key).toLocaleString()} FCFA – ${plan.term} terme</option>`;
 }
-
-// --- Sélection d’un plan depuis page Plans ---
 function selectPlan(value){
   showPage('signup');
   planSelectForm.value = value;
   updateGains();
 }
-
-// --- Calcul des gains ---
 function updateGains(){
   const value = planSelectForm.value;
   if(plansData[value]){
@@ -151,44 +218,79 @@ function updateGains(){
 }
 planSelectForm.addEventListener('change', updateGains);
 
-// --- Stockage des investissements dans le navigateur ---
-let investments = JSON.parse(localStorage.getItem('investments')||'[]');
-
+// ======= Inscription =======
 document.getElementById('investmentForm').addEventListener('submit', e=>{
   e.preventDefault();
   const firstName = document.getElementById('firstName').value;
   const lastName = document.getElementById('lastName').value;
   const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
   const planValue = planSelectForm.value;
   if(!planValue) return alert('Sélectionnez un plan');
+  if(users.find(u=>u.email===email)) return alert('Cet email est déjà utilisé');
+
   const plan = plansData[planValue];
   const gainTotal = plan.daily * plan.days;
   const netWithdraw = gainTotal > 1000 ? Math.round(gainTotal*0.95) : 0;
-  investments.push({
-    user: firstName+' '+lastName,
-    email,
-    planValue,
-    term: plan.term,
-    days: plan.days,
-    daily: plan.daily,
-    total: gainTotal,
-    net: netWithdraw
-  });
-  localStorage.setItem('investments', JSON.stringify(investments));
-  alert('Compte créé et investissement ajouté !');
-  document.getElementById('investmentForm').reset();
-  updateGains();
+
+  const user = {
+    firstName, lastName, email, password,
+    balance: 0,
+    investments: [{
+      date: new Date().toLocaleString(),
+      planValue,
+      term: plan.term,
+      days: plan.days,
+      daily: plan.daily,
+      total: gainTotal,
+      net: netWithdraw
+    }],
+    history: [{
+      date: new Date().toLocaleString(),
+      action: 'Investissement initial',
+      amount: planValue,
+      plan: plan.term
+    }]
+  };
+  users.push(user);
+  localStorage.setItem('users', JSON.stringify(users));
+  currentUser = user;
+  localStorage.setItem('currentUser', JSON.stringify(currentUser));
+  alert('Compte créé et investi !');
+  showPage('dashboard');
 });
 
-// --- Affichage du tableau de bord ---
+// ======= Connexion =======
+document.getElementById('loginForm').addEventListener('submit', e=>{
+  e.preventDefault();
+  const email = document.getElementById('loginEmail').value;
+  const password = document.getElementById('loginPassword').value;
+  const user = users.find(u=>u.email===email && u.password===password);
+  if(!user) return alert('Email ou mot de passe incorrect');
+  currentUser = user;
+  localStorage.setItem('currentUser', JSON.stringify(currentUser));
+  alert('Connexion réussie !');
+  showPage('dashboard');
+});
+
+// ======= Déconnexion =======
+function logout(){
+  currentUser = null;
+  localStorage.setItem('currentUser', null);
+  alert('Vous êtes déconnecté');
+  showPage('login');
+}
+
+// ======= Tableau de bord =======
 function renderDashboard(){
+  if(!currentUser) return showPage('login');
   const tbody = document.getElementById('dashboardTable');
-  if(investments.length===0){
-    tbody.innerHTML = '<tr><td colspan="7">Aucun investissement pour l\'instant.</td></tr>';
+  if(currentUser.investments.length===0){
+    tbody.innerHTML = '<tr><td colspan="7">Aucun investissement</td></tr>';
     return;
   }
   tbody.innerHTML='';
-  investments.forEach((inv,i)=>{
+  currentUser.investments.forEach((inv,i)=>{
     tbody.innerHTML += `<tr>
       <td>${Number(inv.planValue).toLocaleString()}</td>
       <td>${Number(inv.planValue).toLocaleString()}</td>
@@ -201,12 +303,86 @@ function renderDashboard(){
   });
 }
 
-// --- Supprimer un investissement ---
+// ======= Supprimer investissement =======
 function removeInvestment(index){
-  investments.splice(index,1);
-  localStorage.setItem('investments', JSON.stringify(investments));
-  renderDashboard();
+  const invAmount = currentUser.investments[index].planValue;
+  const invPlan = currentUser.investments[index].term;
+  currentUser.investments.splice(index,1);
+  currentUser.history.push({
+    date: new Date().toLocaleString(),
+    action: 'Investissement supprimé',
+    amount: invAmount,
+    plan: invPlan
+  });
+  updateUserData();
 }
+
+// ======= Dépôt =======
+document.getElementById('depositForm').addEventListener('submit', e=>{
+  e.preventDefault();
+  const amount = Number(document.getElementById('depositAmount').value);
+  if(amount<=0) return alert('Montant invalide');
+  currentUser.balance += amount;
+  currentUser.history.push({
+    date: new Date().toLocaleString(),
+    action: 'Dépôt',
+    amount: amount,
+    plan: ''
+  });
+  updateUserData();
+  alert('Dépôt réussi !');
+});
+
+// ======= Retrait =======
+document.getElementById('withdrawForm').addEventListener('submit', e=>{
+  e.preventDefault();
+  const amount = Number(document.getElementById('withdrawAmount').value);
+  if(amount<=0 || amount>currentUser.balance) return alert('Montant invalide ou solde insuffisant');
+  const net = Math.round(amount*0.95);
+  currentUser.balance -= amount;
+  currentUser.history.push({
+    date: new Date().toLocaleString(),
+    action: 'Retrait',
+    amount: amount,
+    plan: `Net reçu : ${net}`
+  });
+  updateUserData();
+  alert(`Retrait effectué ! Net reçu : ${net} FCFA`);
+});
+
+// ======= Historique =======
+function renderHistory(){
+  if(!currentUser) return showPage('login');
+  const tbody = document.getElementById('historyTable');
+  if(currentUser.history.length===0){
+    tbody.innerHTML = '<tr><td colspan="4">Aucun historique</td></tr>';
+    return;
+  }
+  tbody.innerHTML='';
+  currentUser.history.forEach(h=>{
+    tbody.innerHTML += `<tr>
+      <td>${h.date}</td>
+      <td>${h.action}</td>
+      <td>${Number(h.amount).toLocaleString()}</td>
+      <td>${h.plan}</td>
+    </tr>`;
+  });
+}
+
+// ======= Mise à jour utilisateur =======
+function updateUserData(){
+  const index = users.findIndex(u=>u.email===currentUser.email);
+  if(index>-1) users[index]=currentUser;
+  localStorage.setItem('users', JSON.stringify(users));
+  localStorage.setItem('currentUser', JSON.stringify(currentUser));
+  renderDashboard();
+  renderHistory();
+  document.getElementById('currentBalance').innerText = currentUser.balance.toLocaleString();
+  document.getElementById('withdrawBalance').innerText = currentUser.balance.toLocaleString();
+}
+
+// ======= Initialisation =======
+showPage('home');
 </script>
 
 </body>
