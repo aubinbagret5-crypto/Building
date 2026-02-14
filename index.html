@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Manager Invest - Semi-réel</title>
+<style>
+/* --- Styles globaux --- */
+body { font-family: Arial, sans-serif; margin:0; background:#f5f5f5; }
+header { background:#4CAF50; color:white; padding:15px; text-align:center; }
+nav { background:#333; overflow:hidden; }
+nav a { float:left; display:block; color:white; text-align:center; padding:12px 16px; text-decoration:none; }
+nav a:hover { background:#ddd; color:black; }
+section { padding:20px; }
+.plan-card, .investment-card { background:#fff; padding:15px; margin:10px 0; border-radius:10px; box-shadow:0 0 5px rgba(0,0,0,0.1); }
+button { padding:8px 12px; border:none; border-radius:5px; background:#4CAF50; color:white; cursor:pointer; }
+button:hover { background:#45a049; }
+form { background:#fff; padding:20px; border-radius:10px; box-shadow:0 0 10px rgba(0,0,0,0.1); max-width:500px; margin:auto; }
+input, select { width:100%; padding:8px; margin:5px 0 15px 0; border-radius:5px; border:1px solid #ccc; }
+.result { background:#e9f7ef; padding:10px; border-radius:5px; margin-top:10px; }
+table { width:100%; border-collapse: collapse; margin-top:15px; }
+th, td { border:1px solid #ccc; padding:8px; text-align:center; }
+th { background:#eee; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Manager Invest</h1>
+  <p>Investissez et suivez vos gains</p>
+</header>
+
+<nav>
+  <a href="#home" onclick="showPage('home')">Accueil</a>
+  <a href="#plans" onclick="showPage('plans')">Plans</a>
+  <a href="#signup" onclick="showPage('signup')">Investir</a>
+  <a href="#dashboard" onclick="showPage('dashboard')">Tableau de bord</a>
+</nav>
+
+<!-- --- Page Accueil --- -->
+<section id="home">
+  <h2>Bienvenue sur Manager Invest</h2>
+  <p>Découvrez nos plans et commencez à gagner dès maintenant !</p>
+  <button onclick="showPage('plans')">Voir les plans</button>
+</section>
+
+<!-- --- Page Plans --- -->
+<section id="plans" style="display:none;">
+  <h2>Nos Plans d’Investissement</h2>
+  <div id="plansContainer"></div>
+</section>
+
+<!-- --- Formulaire Inscription / Investissement --- -->
+<section id="signup" style="display:none;">
+  <h2>Inscription et Investissement</h2>
+  <form id="investmentForm">
+    <label>Prénom*</label><input type="text" id="firstName" required>
+    <label>Nom*</label><input type="text" id="lastName" required>
+    <label>Email*</label><input type="email" id="email" required>
+    <label>Mot de passe*</label><input type="password" id="password" required>
+    <label>Choisir un plan*</label>
+    <select id="investmentPlanForm" required>
+      <option value="">Sélectionnez un plan...</option>
+    </select>
+    <div class="result">
+      <p>Gains quotidien: <span id="dailyGain">0</span> FCFA</p>
+      <p>Gains total: <span id="totalGain">0</span> FCFA</p>
+      <p>Retrait minimal net: 1 000 FCFA</p>
+      <p>Impôt sur retrait: 5%</p>
+    </div>
+    <button type="submit">Créer mon compte et investir</button>
+  </form>
+</section>
+
+<!-- --- Tableau de bord --- -->
+<section id="dashboard" style="display:none;">
+  <h2>Tableau de bord</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Plan</th>
+        <th>Montant investi</th>
+        <th>Type / Durée</th>
+        <th>Gain quotidien</th>
+        <th>Gain total</th>
+        <th>Retrait net</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="dashboardTable">
+      <tr><td colspan="7">Aucun investissement pour l'instant.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<script>
+// --- Gestion des pages ---
+const pages = ['home','plans','signup','dashboard'];
+function showPage(page){
+  pages.forEach(p=>document.getElementById(p).style.display='none');
+  document.getElementById(page).style.display='block';
+  if(page==='dashboard') renderDashboard();
+}
+
+// --- Données des plans ---
+const plansData = {
+  2500: {term:'Long', days:60, daily:699},
+  5000: {term:'Long', days:60, daily:1398},
+  10000: {term:'Long', days:60, daily:2796},
+  20000: {term:'Moyen', days:30, daily:5592},
+  50000: {term:'Moyen', days:30, daily:13980},
+  100000: {term:'Court', days:15, daily:27960},
+  200000: {term:'Court', days:15, daily:55920},
+  500000: {term:'Court', days:15, daily:139800},
+  750000: {term:'Court', days:15, daily:209700},
+  1000000: {term:'Court', days:15, daily:279600}
+};
+
+// --- Génération des plans sur la page Plans et formulaire ---
+const plansContainer = document.getElementById('plansContainer');
+const planSelectForm = document.getElementById('investmentPlanForm');
+for(let key in plansData){
+  const plan = plansData[key];
+  plansContainer.innerHTML += `
+  <div class="plan-card">
+    <h3>${Number(key).toLocaleString()} FCFA – ${plan.term} terme (${plan.days}j)</h3>
+    <p>Gain quotidien : ${plan.daily.toLocaleString()} FCFA</p>
+    <p>Gain total : ${(plan.daily*plan.days).toLocaleString()} FCFA</p>
+    <button onclick="selectPlan(${key})">Investir</button>
+  </div>`;
+  planSelectForm.innerHTML += `<option value="${key}">${Number(key).toLocaleString()} FCFA – ${plan.term} terme</option>`;
+}
+
+// --- Sélection d’un plan depuis page Plans ---
+function selectPlan(value){
+  showPage('signup');
+  planSelectForm.value = value;
+  updateGains();
+}
+
+// --- Calcul des gains ---
+function updateGains(){
+  const value = planSelectForm.value;
+  if(plansData[value]){
+    const plan = plansData[value];
+    document.getElementById('dailyGain').innerText = plan.daily.toLocaleString();
+    document.getElementById('totalGain').innerText = (plan.daily*plan.days).toLocaleString();
+  } else {
+    document.getElementById('dailyGain').innerText='0';
+    document.getElementById('totalGain').innerText='0';
+  }
+}
+planSelectForm.addEventListener('change', updateGains);
+
+// --- Stockage des investissements dans le navigateur ---
+let investments = JSON.parse(localStorage.getItem('investments')||'[]');
+
+document.getElementById('investmentForm').addEventListener('submit', e=>{
+  e.preventDefault();
+  const firstName = document.getElementById('firstName').value;
+  const lastName = document.getElementById('lastName').value;
+  const email = document.getElementById('email').value;
+  const planValue = planSelectForm.value;
+  if(!planValue) return alert('Sélectionnez un plan');
+  const plan = plansData[planValue];
+  const gainTotal = plan.daily * plan.days;
+  const netWithdraw = gainTotal > 1000 ? Math.round(gainTotal*0.95) : 0;
+  investments.push({
+    user: firstName+' '+lastName,
+    email,
+    planValue,
+    term: plan.term,
+    days: plan.days,
+    daily: plan.daily,
+    total: gainTotal,
+    net: netWithdraw
+  });
+  localStorage.setItem('investments', JSON.stringify(investments));
+  alert('Compte créé et investissement ajouté !');
+  document.getElementById('investmentForm').reset();
+  updateGains();
+});
+
+// --- Affichage du tableau de bord ---
+function renderDashboard(){
+  const tbody = document.getElementById('dashboardTable');
+  if(investments.length===0){
+    tbody.innerHTML = '<tr><td colspan="7">Aucun investissement pour l\'instant.</td></tr>';
+    return;
+  }
+  tbody.innerHTML='';
+  investments.forEach((inv,i)=>{
+    tbody.innerHTML += `<tr>
+      <td>${Number(inv.planValue).toLocaleString()}</td>
+      <td>${Number(inv.planValue).toLocaleString()}</td>
+      <td>${inv.term} / ${inv.days}j</td>
+      <td>${Number(inv.daily).toLocaleString()}</td>
+      <td>${Number(inv.total).toLocaleString()}</td>
+      <td>${Number(inv.net).toLocaleString()}</td>
+      <td><button onclick="removeInvestment(${i})">Supprimer</button></td>
+    </tr>`;
+  });
+}
+
+// --- Supprimer un investissement ---
+function removeInvestment(index){
+  investments.splice(index,1);
+  localStorage.setItem('investments', JSON.stringify(investments));
+  renderDashboard();
+}
+</script>
+
+</body>
+</html>
